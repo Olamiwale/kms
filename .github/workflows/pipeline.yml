@@ -27,20 +27,20 @@ jobs:
 
       - name: Azure CLI - ACR Login
         run: |
-          az acr login --name accountacr
+          az acr login --name depaulacr
 
 
       - name: Build and Push Docker image to ACR
         run: |
-          docker build -t accountacr.azurecr.io/account-service:latest .
-          docker push accountacr.azurecr.io/account-service:latest
+          docker build -t depaulacr.azurecr.io/app:latest .
+          docker push depaulacr.azurecr.io/app:latest
 
 
       - name: Get AKS Credentials
         run: |
-          az aks get-credentials --resource-group account-rg --name account-aks --overwrite-existing
+          az aks get-credentials --resource-group depaulRG --name depaulaks --overwrite-existing
 
-          
+
       - name: Deploy to AKS
         run: |
           kubectl apply -f k8s/deployment.yaml
