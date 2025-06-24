@@ -13,9 +13,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      ACR_NAME: depaulacr
+      IMAGE_NAME: app
+      RG_NAME: depaulRG
+      AKS_NAME: depaulaks
+
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
 
       - name: Azure Login (OIDC)
         uses: azure/login@v1
@@ -23,24 +31,34 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+
+      - name: Set IMAGE_TAG
+        run: echo "IMAGE_TAG=${GITHUB_SHA::7}" >> $GITHUB_ENV
           
+
       - name: Azure CLI - ACR Login
         run: |
-          az acr login --name depaulacr
+          az acr login --name $ACR_NAME
 
 
       - name: Build and Push Docker image to ACR
         run: |
-          docker build -t depaulacr.azurecr.io/app:latest ./app
-          docker push depaulacr.azurecr.io/app:latest
+          docker build -t $ACR_NAME.azurecr.io/$IMAGE_NAME:${IMAGE_TAG} ./app
+          docker push $ACR_NAME.azurecr.io/$IMAGE_NAME:${IMAGE_TAG}
 
 
       - name: Get AKS Credentials
         run: |
-          az aks get-credentials --resource-group depaulRG --name depaulaks --overwrite-existing
+          az aks get-credentials --resource-group $RG_NAME --name $AKS_NAME --overwrite-existing
 
 
-      - name: Deploy to AKS
+     # - name: Deploy to AKS
+     #   run: |
+     #   kubectl apply -f ./app/k8s/deployment.yaml
+     #   kubectl apply -f ./app/k8s/service.yaml
+
+
+      - name: Deploy to AKS (auto-patch image tag)
         run: |
-          kubectl apply -f ./app/k8s/deployment.yaml
-          kubectl apply -f ./app/k8s/service.yaml
+          kubectl set image deployment/app-deployment app=depaulacr.azurecr.io/app:${IMAGE_TAG}
