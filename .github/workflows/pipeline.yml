@@ -61,4 +61,4 @@ jobs:
 
       - name: Deploy to AKS (auto-patch image tag)
         run: |
-          kubectl set image deployment/account-deployment app=depaulacr.azurecr.io/app:${IMAGE_TAG}
+          kubectl set image deployment/account-deployment account=depaulacr.azurecr.io/app:${IMAGE_TAG}
